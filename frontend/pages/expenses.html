@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartExpense — Despesas</title>
+  <link rel="stylesheet" href="../css/global.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter>
+      <rect width="100%" height="100%" filter="url(#g)"/>
+    </svg>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true"><rect x="2" y="12" width="5" height="10" rx="1"/><rect x="9.5" y="6" width="5" height="16" rx="1"/><rect x="17" y="2" width="5" height="20" rx="1"/></svg></div>
+        <span class="logo-text">SmartExpense</span>
+      </div>
+      <span class="nav-label">Menu</span>
+      <a href="dashboard.html" class="nav-item" data-page="dashboard"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard</a>
+      <a href="income.html"    class="nav-item" data-page="income"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span> Receitas</a>
+      <a href="expenses.html"  class="nav-item active" data-page="expenses"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg></span> Despesas</a>
+      <a href="reports.html"   class="nav-item" data-page="reports"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span> Relatórios</a>
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sair</button>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="hamburger-btn" id="hamburger" aria-label="Menu">☰</button>
+          <span class="topbar-title">Despesas</span>
+        </div>
+        <div class="topbar-right">
+          <div class="user-badge">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <span class="user-name" id="userName">Usuário</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <div class="page-header animate">
+          <h1>Despesas</h1>
+          <p>Controle todos os seus gastos por categoria</p>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card animate" style="margin-bottom:18px;">
+          <div class="filter-bar">
+            <div class="form-group">
+              <label class="form-label">Data inicial</label>
+              <input type="date" id="filterStart" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data final</label>
+              <input type="date" id="filterEnd" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categoria</label>
+              <select id="filterCat" class="form-control">
+                <option value="">Todas</option>
+                <option>Alimentação</option>
+                <option>Transporte</option>
+                <option>Moradia</option>
+                <option>Saúde</option>
+                <option>Educação</option>
+                <option>Lazer</option>
+                <option>Outros</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:2;">
+              <label class="form-label">Buscar descrição</label>
+              <input type="text" id="filterDesc" class="form-control" placeholder="Buscar...">
+            </div>
+            <button class="btn btn-secondary" onclick="applyFilters()">Filtrar</button>
+            <button class="btn btn-secondary" onclick="clearFilters()">Limpar</button>
+          </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="card animate">
+          <div class="toolbar">
+            <h3 style="margin:0; color:var(--text-bright);">Lista de Despesas</h3>
+            <button class="btn btn-primary" onclick="openCreateModal()">+ Nova despesa</button>
+          </div>
+
+          <div id="tableContainer">
+            <div class="loading-overlay"><div class="spinner"></div> Carregando...</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal criar/editar -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle">Nova Despesa</span>
+        <button class="modal-close" onclick="closeModal()" aria-label="Fechar">✕</button>
+      </div>
+      <div id="modalAlert"></div>
+      <form id="expenseForm" novalidate>
+        <input type="hidden" id="expenseId">
+        <div class="form-group">
+          <label class="form-label" for="eDesc">Descrição</label>
+          <input class="form-control" type="text" id="eDesc" placeholder="Ex: Mercado" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="eCat">Categoria</label>
+          <select class="form-control" id="eCat" required>
+            <option value="">Selecione...</option>
+            <option>Alimentação</option>
+            <option>Transporte</option>
+            <option>Moradia</option>
+            <option>Saúde</option>
+            <option>Educação</option>
+            <option>Lazer</option>
+            <option>Outros</option>
+          </select>
+        </div>
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="eAmount">Valor (R$)</label>
+            <input class="form-control" type="number" id="eAmount" step="0.01" min="0.01" placeholder="0,00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="eDate">Data</label>
+            <input class="form-control" type="date" id="eDate" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal confirmar exclusão -->
+  <div class="modal-overlay" id="deleteOverlay">
+    <div class="modal" style="max-width:380px;">
+      <div class="modal-header">
+        <span class="modal-title">Confirmar exclusão</span>
+        <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+      </div>
+      <p style="margin-bottom:20px;">Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.</p>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/expenses.js"></script>
+  <script>
+    if (!requireAuth()) {}
+    initSidebar();
+    initScrollAnimations();
+    loadExpenses();
+  </script>
+</body>
+</html>

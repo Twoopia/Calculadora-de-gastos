@@ -1,0 +1,83 @@
+/* Páginas de autenticação (login e cadastro) */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 420px;
+  animation: fadeUp .6s var(--ease);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.auth-logo .logo-icon {
+  width: 52px; height: 52px;
+  background: var(--accent);
+  border-radius: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 26px; margin-bottom: 12px;
+  box-shadow: 0 0 32px rgba(124,58,237,.35);
+}
+.auth-logo .brand-name {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700; font-size: 1.4rem;
+  color: var(--text-bright);
+  display: block;
+}
+.auth-logo .brand-sub {
+  font-size: .8rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+.auth-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+}
+
+.auth-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.25rem; font-weight: 700;
+  color: var(--text-bright); margin-bottom: 6px;
+}
+.auth-subtitle { color: var(--text-muted); font-size: .85rem; margin-bottom: 24px; }
+
+.auth-card .btn-primary { width: 100%; }
+
+.auth-footer {
+  text-align: center; margin-top: 20px;
+  font-size: .845rem; color: var(--text-muted);
+}
+.auth-footer a { color: var(--accent-light); font-weight: 500; }
+.auth-footer a:hover { color: var(--text-bright); }
+
+.password-wrapper { position: relative; }
+.password-wrapper .form-control { padding-right: 42px; }
+.toggle-password {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: .9rem; transition: color .2s;
+  min-height: 44px; min-width: 36px;
+  display: flex; align-items: center; justify-content: center;
+}
+.toggle-password:hover { color: var(--text-bright); }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 22px 18px; }
+}

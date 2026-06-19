@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartExpense — Entrar</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+  <!-- Grain overlay -->
+  <div class="grain" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter>
+      <rect width="100%" height="100%" filter="url(#g)"/>
+    </svg>
+  </div>
+
+  <div class="auth-page">
+    <div class="auth-container">
+
+      <!-- Logo -->
+      <div class="auth-logo">
+        <div class="logo-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="white" aria-hidden="true"><rect x="2" y="12" width="5" height="10" rx="1"/><rect x="9.5" y="6" width="5" height="16" rx="1"/><rect x="17" y="2" width="5" height="20" rx="1"/></svg></div>
+        <span class="brand-name">SmartExpense</span>
+        <span class="brand-sub">Controle Financeiro Pessoal</span>
+      </div>
+
+      <!-- Card de login -->
+      <div class="auth-card">
+        <h1 class="auth-title">Bem-vindo de volta</h1>
+        <p class="auth-subtitle">Entre com sua conta para continuar</p>
+
+        <div id="formAlert"></div>
+
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="email">E-mail</label>
+            <input class="form-control" type="email" id="email" name="email"
+                   placeholder="seu@email.com" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Senha</label>
+            <div class="password-wrapper">
+              <input class="form-control" type="password" id="password" name="password"
+                     placeholder="••••••••" required autocomplete="current-password">
+              <button type="button" class="toggle-password" onclick="togglePassword('password')" aria-label="Mostrar senha">👁</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:8px;">
+            Entrar
+          </button>
+        </form>
+      </div>
+
+      <p class="auth-footer">
+        Não tem conta? <a href="register.html">Criar conta grátis</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    // Redireciona se já autenticado
+    if (localStorage.getItem('smartexpense_token')) {
+      window.location.replace('dashboard.html');
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+    function togglePassword(id) {
+      const input = document.getElementById(id);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+  </script>
+</body>
+</html>
