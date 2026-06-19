@@ -15,7 +15,13 @@ def get_current_user(
 ) -> User:
     """Valida o token JWT e retorna o usuário autenticado."""
     payload = decode_token(credentials.credentials)
-    user_id = int(payload.get("sub", 0))
+    sub = payload.get("sub")
+    if not sub:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
+    try:
+        user_id = int(sub)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
     user = UserRepository(db).get_by_id(user_id)
     if not user:
         raise HTTPException(

@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +16,13 @@ from backend.routers import (
 
 _is_prod = os.environ.get("ENVIRONMENT") == "production"
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_tables()
+    yield
+
+
 app = FastAPI(
     title="SmartExpense API",
     description=(
@@ -25,6 +33,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url=None if _is_prod else "/docs",
     redoc_url=None if _is_prod else "/redoc",
+    lifespan=lifespan,
 )
 
 # Bearer tokens não precisam de allow_credentials — wildcard é seguro aqui
@@ -42,12 +51,6 @@ app.include_router(income_router.router, prefix="/api")
 app.include_router(expense_router.router, prefix="/api")
 app.include_router(dashboard_router.router, prefix="/api")
 app.include_router(report_router.router, prefix="/api")
-
-
-@app.on_event("startup")
-def startup() -> None:
-    """Cria tabelas no banco na primeira execução."""
-    create_tables()
 
 
 # Serve o frontend como arquivos estáticos (deve ser montado por último)

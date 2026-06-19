@@ -4,6 +4,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 _DATABASE_URL = os.environ.get("DATABASE_URL")
+_is_prod = os.environ.get("ENVIRONMENT") == "production"
+
+if not _DATABASE_URL and _is_prod:
+    raise RuntimeError(
+        "DATABASE_URL é obrigatória em produção. "
+        "Configure a variável de ambiente no painel do Vercel."
+    )
 
 if _DATABASE_URL:
     # Render entrega "postgres://..." mas SQLAlchemy 2.x exige "postgresql://"
