@@ -1,4 +1,4 @@
-# 💰 SmartExpense
+# 💰 Calculadora de gastos
 
 **Sistema de Controle Financeiro Pessoal**
 
