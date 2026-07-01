@@ -1,4 +1,4 @@
-from datetime import date
+import datetime
 from typing import Optional
 from pydantic import BaseModel, field_validator
 from backend.models.expense import EXPENSE_CATEGORIES
@@ -8,7 +8,7 @@ class ExpenseCreate(BaseModel):
     description: str
     category: str
     amount: float
-    date: date
+    date: datetime.date
 
     @field_validator("description")
     @classmethod
@@ -37,7 +37,26 @@ class ExpenseUpdate(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     amount: Optional[float] = None
-    date: Optional[date] = None
+    date: Optional[datetime.date] = None
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v: float) -> float:
+        if v is not None and v <= 0:
+            raise ValueError("Valor deve ser maior que zero")
+        return round(v, 2) if v is not None else v
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def parse_date(cls, v):
+        if v is None or v == "":
+            return None
+        if isinstance(v, str):
+            try:
+                return datetime.date.fromisoformat(v)
+            except ValueError:
+                raise ValueError("Data inválida. Use o formato AAAA-MM-DD.")
+        return v
 
 
 class ExpenseResponse(BaseModel):
@@ -45,7 +64,7 @@ class ExpenseResponse(BaseModel):
     description: str
     category: str
     amount: float
-    date: date
+    date: datetime.date
     user_id: int
 
     model_config = {"from_attributes": True}

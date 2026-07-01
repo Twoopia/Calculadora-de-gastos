@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const category    = document.getElementById('eCat').value;
     const amountRaw   = document.getElementById('eAmount').value;
     const amount      = parseFloat(amountRaw);
+    const dateVal     = document.getElementById('eDate').value;
 
     if (!description) {
       showAlert(alertEl, 'Descrição é obrigatória.');
@@ -115,8 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
       showAlert(alertEl, 'Informe um valor válido maior que zero.');
       return;
     }
+    if (!dateVal) {
+      showAlert(alertEl, 'Data é obrigatória.');
+      return;
+    }
 
-    const payload = { description, category, amount, date: document.getElementById('eDate').value };
+    const payload = { description, category, amount, date: dateVal };
 
     btn.disabled  = true;
     btn.innerHTML = '<span class="spinner"></span>';

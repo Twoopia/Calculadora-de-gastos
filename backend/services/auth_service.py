@@ -8,7 +8,12 @@ from fastapi import HTTPException, status
 from backend.repositories.user_repository import UserRepository
 from backend.schemas.user import UserCreate, TokenResponse, UserResponse
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "smartexpense-dev-only-insecure-key-troque-em-producao")
+_is_prod = os.environ.get("ENVIRONMENT") == "production"
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    if _is_prod:
+        raise RuntimeError("SECRET_KEY é obrigatória em produção. Configure a variável de ambiente.")
+    SECRET_KEY = "smartexpense-dev-only-insecure-key-troque-em-producao"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 

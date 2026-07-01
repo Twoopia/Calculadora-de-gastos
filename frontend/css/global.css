@@ -94,8 +94,9 @@ a:hover { color: var(--text-bright); }
   flex-shrink: 0;
 }
 .logo-text {
-  font-family: 'Syne', sans-serif;
-  font-weight: 800; font-size: 0.9rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700; font-size: 0.9rem;
+  letter-spacing: 0.02em;
   color: var(--text-bright);
   white-space: nowrap;
 }
