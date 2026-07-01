@@ -23,7 +23,7 @@ Desenvolver um sistema de controle financeiro pessoal com qualidade profissional
 | Camada     | Tecnologia                                      |
 |------------|-------------------------------------------------|
 | Backend    | Python 3.12 · FastAPI · SQLAlchemy · Pydantic  |
-| Banco      | SQLite (criado automaticamente)                |
+| Banco      | PostgreSQL · Neon (produção) · SQLite (local)  |
 | Frontend   | HTML5 · CSS3 · JavaScript Vanilla              |
 | Gráficos   | Chart.js 4.4                                   |
 | Autenticação | JWT (python-jose) · Bcrypt (passlib)         |
@@ -104,8 +104,8 @@ smartexpense/
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/smartexpense.git
-cd smartexpense
+git clone https://github.com/Twoopia/Calculadora-de-gastos.git
+cd Calculadora-de-gastos
 ```
 
 ### 2. Criar ambiente virtual
@@ -261,7 +261,7 @@ style: update dark theme design system
 - [x] Sprint 3 — Relatórios, Gráficos e Finalização
 - [ ] v2.0 — Testes automatizados (pytest)
 - [ ] v2.0 — CI/CD com GitHub Actions
-- [ ] v2.0 — Deploy em nuvem (Railway / Render)
+- [x] Deploy em produção (Vercel + Neon PostgreSQL)
 - [ ] v2.0 — Importação de extratos CSV
 
 ---

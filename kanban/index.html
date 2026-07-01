@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanban — SmartExpense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0D0D0D; --bg-card:#111111; --bg-elevated:#161616;
+  --border:rgba(255,255,255,0.06);
+  --accent:#7C3AED; --accent-light:#9D6EFF; --accent-dim:rgba(124,58,237,0.12);
+  --text:#C9B99A; --text-bright:#E8D5B5; --text-muted:#6B5E4E;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+  --up:#4ADE80; --down:#F87171;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:auto;}
+
+/* grain */
+.grain{position:fixed;inset:0;pointer-events:none;z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity:0.035;}
+
+/* header */
+header{position:sticky;top:0;z-index:100;background:rgba(13,13,13,0.88);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;
+  justify-content:space-between;height:60px;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo svg{color:var(--accent);}
+.logo-text{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--text-bright);}
+.logo-text span{color:var(--accent-light);}
+.header-right{display:flex;align-items:center;gap:12px;}
+.header-meta{font-size:0.75rem;color:var(--text-muted);}
+.btn-new{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 14px;
+  font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:6px;transition:box-shadow 0.3s var(--ease);}
+.btn-new:hover{box-shadow:0 0 18px rgba(124,58,237,0.5);}
+
+/* main */
+main{padding:2rem;}
+.board-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:clamp(1.3rem,2.5vw,1.7rem);
+  color:var(--text-bright);margin-bottom:0.25rem;}
+.board-sub{font-size:0.82rem;color:var(--text-muted);margin-bottom:2rem;}
+
+/* board */
+.board{display:flex;gap:1rem;align-items:flex-start;padding-bottom:2rem;}
+
+/* column */
+.column{width:270px;background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;flex-shrink:0;
+  transition:border-color 0.3s var(--ease),box-shadow 0.3s var(--ease);}
+.column.drag-over{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+
+.col-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);}
+.col-title-wrap{display:flex;align-items:center;gap:8px;}
+.col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.col-title{font-weight:600;font-size:0.8rem;color:var(--text-bright);letter-spacing:0.05em;text-transform:uppercase;}
+.col-count{font-size:0.7rem;font-weight:600;padding:2px 7px;border-radius:20px;
+  background:var(--bg-elevated);color:var(--text-muted);}
+
+.col-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:80px;}
+
+.btn-add-card{width:100%;background:transparent;border:1px dashed var(--border);border-radius:8px;
+  padding:9px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:0.78rem;
+  cursor:pointer;transition:all 0.2s var(--ease);display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:4px;}
+.btn-add-card:hover{border-color:var(--accent);color:var(--accent-light);background:var(--accent-dim);}
+
+/* card */
+.card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;cursor:grab;position:relative;
+  transition:transform 0.25s var(--ease),box-shadow 0.25s var(--ease),border-color 0.25s var(--ease);
+  animation:fadeIn 0.35s var(--ease) both;}
+.card:active{cursor:grabbing;}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.4);border-color:rgba(255,255,255,0.1);}
+.card:hover .card-actions{opacity:1;}
+.card.dragging{opacity:0.35;transform:scale(0.97);}
+
+.card-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:opacity 0.2s;}
+.card-btn{width:22px;height:22px;border-radius:5px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:11px;transition:background 0.15s;}
+.card-btn.edit{background:rgba(124,58,237,0.2);color:var(--accent-light);}
+.card-btn.edit:hover{background:rgba(124,58,237,0.4);}
+.card-btn.del{background:rgba(248,113,113,0.15);color:#F87171;}
+.card-btn.del:hover{background:rgba(248,113,113,0.3);}
+
+.card-tag{display:inline-block;font-size:0.63rem;font-weight:600;letter-spacing:0.06em;
+  text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-bottom:7px;}
+.card-title{font-size:0.84rem;font-weight:500;color:var(--text-bright);line-height:1.4;
+  padding-right:44px;}
+.card-footer{margin-top:10px;display:flex;align-items:center;justify-content:space-between;}
+.card-sprint{font-size:0.64rem;color:var(--text-muted);}
+.card-avatar{width:22px;height:22px;border-radius:50%;background:var(--accent-dim);
+  border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;
+  font-size:0.55rem;font-weight:700;color:var(--accent-light);flex-shrink:0;}
+
+.empty-slot{border:1px dashed var(--border);border-radius:8px;padding:14px;
+  text-align:center;font-size:0.73rem;color:var(--text-muted);}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+  z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;
+  opacity:0;pointer-events:none;transition:opacity 0.25s var(--ease);}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;
+  padding:28px;width:100%;max-width:440px;
+  transform:translateY(12px) scale(0.98);transition:transform 0.3s var(--ease);}
+.modal-overlay.open .modal{transform:translateY(0) scale(1);}
+.modal-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:1.05rem;
+  color:var(--text-bright);margin-bottom:20px;}
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-size:0.75rem;font-weight:600;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
+.form-input,.form-select{width:100%;background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;color:var(--text-bright);font-family:'DM Sans',sans-serif;
+  font-size:0.85rem;outline:none;transition:border-color 0.2s;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);}
+.form-select option{background:var(--bg-elevated);}
+.modal-actions{display:flex;gap:10px;margin-top:20px;}
+.btn-cancel{flex:1;background:transparent;border:1px solid var(--border);border-radius:8px;
+  padding:10px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:0.85rem;
+  cursor:pointer;transition:border-color 0.2s;}
+.btn-cancel:hover{border-color:rgba(255,255,255,0.15);}
+.btn-save{flex:2;background:var(--accent);border:none;border-radius:8px;padding:10px;
+  color:#fff;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:600;
+  cursor:pointer;transition:box-shadow 0.25s var(--ease);}
+.btn-save:hover{box-shadow:0 0 18px rgba(124,58,237,0.5);}
+
+/* legend */
+.legend{margin-top:1.5rem;display:flex;flex-wrap:wrap;gap:1rem;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:0.73rem;color:var(--text-muted);}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+@media(max-width:640px){
+  main{padding:1rem;}
+  header{padding:0 1rem;}
+  .header-meta{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <div class="logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="3" width="6" height="18" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="16" y="3" width="6" height="18" rx="1"/>
+    </svg>
+    <span class="logo-text">Smart<span>Expense</span> · Kanban</span>
+  </div>
+  <div class="header-right">
+    <span class="header-meta">IFSC — Gerência de Projetos 2026/1</span>
+    <button class="btn-new" onclick="openModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo Card
+    </button>
+  </div>
+</header>
+
+<main>
+  <h1 class="board-title">Quadro Kanban</h1>
+  <p class="board-sub">Rafael Becker · Arthur Rian · Leonardo Bion</p>
+
+  <div class="board" id="board">
+    <!-- columns rendered by JS -->
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#6B7280"></span>Backlog</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#3B82F6"></span>A Fazer</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#F59E0B"></span>Em Andamento</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#7C3AED"></span>Em Revisão</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#10B981"></span>Concluído</div>
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Novo Card</div>
+    <div class="form-group">
+      <label class="form-label">Título</label>
+      <input class="form-input" id="fTitle" placeholder="Descreva a tarefa...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <select class="form-select" id="fTag">
+        <option value="Feature">Feature</option>
+        <option value="Backend">Backend</option>
+        <option value="Frontend">Frontend</option>
+        <option value="Infra">Infra</option>
+        <option value="Segurança">Segurança</option>
+        <option value="Melhoria">Melhoria</option>
+        <option value="Bug">Bug</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Coluna</label>
+      <select class="form-select" id="fCol">
+        <option value="backlog">Backlog</option>
+        <option value="todo">A Fazer</option>
+        <option value="doing">Em Andamento</option>
+        <option value="review">Em Revisão</option>
+        <option value="done">Concluído</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sprint</label>
+      <select class="form-select" id="fSprint">
+        <option value="Sprint 1">Sprint 1</option>
+        <option value="Sprint 2">Sprint 2</option>
+        <option value="Sprint 3">Sprint 3</option>
+        <option value="Futuro">Futuro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsável</label>
+      <select class="form-select" id="fOwner">
+        <option value="RB">RB — Rafael Becker</option>
+        <option value="AR">AR — Arthur Rian</option>
+        <option value="LB">LB — Leonardo Bion</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveCard()">Salvar Card</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLS = [
+  { id:'backlog', label:'Backlog',       dot:'#6B7280' },
+  { id:'todo',    label:'A Fazer',       dot:'#3B82F6' },
+  { id:'doing',   label:'Em Andamento',  dot:'#F59E0B' },
+  { id:'review',  label:'Em Revisão',    dot:'#7C3AED' },
+  { id:'done',    label:'Concluído',     dot:'#10B981' },
+];
+
+const TAG_STYLES = {
+  Feature:    { bg:'rgba(59,130,246,0.12)',  color:'#60A5FA' },
+  Backend:    { bg:'rgba(16,185,129,0.12)',  color:'#10B981' },
+  Frontend:   { bg:'rgba(251,191,36,0.12)',  color:'#FBBF24' },
+  Infra:      { bg:'rgba(124,58,237,0.12)',  color:'#9D6EFF' },
+  Segurança:  { bg:'rgba(248,113,113,0.12)', color:'#F87171' },
+  Melhoria:   { bg:'rgba(107,114,128,0.15)', color:'#9CA3AF' },
+  Bug:        { bg:'rgba(239,68,68,0.15)',   color:'#EF4444' },
+};
+
+const DEFAULT_CARDS = [
+  { id:1,  col:'done',    title:'Modelagem do banco de dados',              tag:'Backend',   sprint:'Sprint 1', owner:'RB' },
+  { id:2,  col:'done',    title:'Autenticação — login e cadastro',          tag:'Backend',   sprint:'Sprint 1', owner:'AR' },
+  { id:3,  col:'done',    title:'Módulo de Receitas (CRUD)',                tag:'Feature',   sprint:'Sprint 1', owner:'LB' },
+  { id:4,  col:'done',    title:'Módulo de Despesas (CRUD)',                tag:'Feature',   sprint:'Sprint 1', owner:'RB' },
+  { id:5,  col:'done',    title:'Dashboard com gráficos',                   tag:'Feature',   sprint:'Sprint 2', owner:'AR' },
+  { id:6,  col:'done',    title:'Relatório por categoria de despesa',       tag:'Feature',   sprint:'Sprint 2', owner:'LB' },
+  { id:7,  col:'done',    title:'Relatório mensal — Receita x Despesa',    tag:'Feature',   sprint:'Sprint 2', owner:'RB' },
+  { id:8,  col:'done',    title:'Design responsivo (mobile/tablet/desktop)',tag:'Frontend',  sprint:'Sprint 2', owner:'AR' },
+  { id:9,  col:'done',    title:'Substituição de emojis por ícones SVG',   tag:'Frontend',  sprint:'Sprint 3', owner:'LB' },
+  { id:10, col:'done',    title:'Correção de vulnerabilidades (XSS, JWT)',  tag:'Segurança', sprint:'Sprint 3', owner:'RB' },
+  { id:11, col:'done',    title:'Configuração do banco PostgreSQL (Neon)',  tag:'Infra',     sprint:'Sprint 3', owner:'AR' },
+  { id:12, col:'done',    title:'Deploy em produção (Vercel)',              tag:'Infra',     sprint:'Sprint 3', owner:'LB' },
+  { id:13, col:'backlog', title:'Recuperação de senha por e-mail',         tag:'Melhoria',  sprint:'Futuro',   owner:'RB' },
+  { id:14, col:'backlog', title:'Exportar relatório em PDF',               tag:'Melhoria',  sprint:'Futuro',   owner:'AR' },
+  { id:15, col:'backlog', title:'Definir metas financeiras mensais',       tag:'Melhoria',  sprint:'Futuro',   owner:'LB' },
+  { id:16, col:'backlog', title:'Notificações de gastos excessivos',       tag:'Melhoria',  sprint:'Futuro',   owner:'RB' },
+];
+
+let cards = load();
+let nextId = cards.length ? Math.max(...cards.map(c=>c.id)) + 1 : 17;
+let editingId = null;
+let draggingId = null;
+let activeCol = null;
+
+function load() {
+  try { const d = localStorage.getItem('kanban_cards'); return d ? JSON.parse(d) : DEFAULT_CARDS; }
+  catch { return DEFAULT_CARDS; }
+}
+function save() { localStorage.setItem('kanban_cards', JSON.stringify(cards)); }
+
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  COLS.forEach(col => {
+    const colCards = cards.filter(c => c.col === col.id);
+    const div = document.createElement('div');
+    div.className = 'column';
+    div.dataset.col = col.id;
+    div.innerHTML = `
+      <div class="col-header">
+        <div class="col-title-wrap">
+          <span class="col-dot" style="background:${col.dot}"></span>
+          <span class="col-title">${col.label}</span>
+        </div>
+        <span class="col-count">${colCards.length}</span>
+      </div>
+      <div class="col-body" id="col-${col.id}">
+        ${colCards.length === 0 ? '<div class="empty-slot">Arraste cards aqui</div>' : ''}
+        ${colCards.map((c,i) => cardHTML(c, i)).join('')}
+        <button class="btn-add-card" onclick="openModal('${col.id}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Adicionar card
+        </button>
+      </div>`;
+    div.addEventListener('dragover', onDragOver);
+    div.addEventListener('drop', onDrop);
+    div.addEventListener('dragleave', onDragLeave);
+    board.appendChild(div);
+  });
+}
+
+function cardHTML(c, i) {
+  const ts = TAG_STYLES[c.tag] || TAG_STYLES.Melhoria;
+  return `
+  <div class="card" draggable="true" data-id="${c.id}"
+       style="animation-delay:${i*35}ms"
+       ondragstart="onDragStart(event,${c.id})">
+    <div class="card-actions">
+      <button class="card-btn edit" onclick="openEdit(${c.id})" title="Editar">✎</button>
+      <button class="card-btn del"  onclick="deleteCard(${c.id})" title="Excluir">✕</button>
+    </div>
+    <span class="card-tag" style="background:${ts.bg};color:${ts.color}">${c.tag}</span>
+    <div class="card-title">${esc(c.title)}</div>
+    <div class="card-footer">
+      <span class="card-sprint">${esc(c.sprint)}</span>
+      <div class="card-avatar">${esc(c.owner)}</div>
+    </div>
+  </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Modal ── */
+function openModal(colId) {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Novo Card';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fTag').value = 'Feature';
+  document.getElementById('fCol').value = colId || 'todo';
+  document.getElementById('fSprint').value = 'Sprint 1';
+  document.getElementById('fOwner').value = 'RB';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fTitle').focus(), 100);
+}
+
+function openEdit(id) {
+  const c = cards.find(x => x.id === id);
+  if (!c) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar Card';
+  document.getElementById('fTitle').value = c.title;
+  document.getElementById('fTag').value = c.tag;
+  document.getElementById('fCol').value = c.col;
+  document.getElementById('fSprint').value = c.sprint;
+  document.getElementById('fOwner').value = c.owner;
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fTitle').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function saveCard() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { document.getElementById('fTitle').focus(); return; }
+  const data = {
+    title,
+    tag:    document.getElementById('fTag').value,
+    col:    document.getElementById('fCol').value,
+    sprint: document.getElementById('fSprint').value,
+    owner:  document.getElementById('fOwner').value,
+  };
+  if (editingId) {
+    const idx = cards.findIndex(c => c.id === editingId);
+    if (idx !== -1) cards[idx] = { ...cards[idx], ...data };
+  } else {
+    cards.push({ id: nextId++, ...data });
+  }
+  save(); render(); closeModal();
+}
+
+function deleteCard(id) {
+  if (!confirm('Excluir este card?')) return;
+  cards = cards.filter(c => c.id !== id);
+  save(); render();
+}
+
+/* ── Drag & Drop ── */
+function onDragStart(e, id) {
+  draggingId = id;
+  setTimeout(() => {
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if (el) el.classList.add('dragging');
+  }, 0);
+}
+
+document.addEventListener('dragend', () => {
+  document.querySelectorAll('.card.dragging').forEach(el => el.classList.remove('dragging'));
+  document.querySelectorAll('.column.drag-over').forEach(el => el.classList.remove('drag-over'));
+  draggingId = null;
+});
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.closest('.column').classList.add('drag-over');
+}
+
+function onDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget))
+    e.currentTarget.closest('.column').classList.remove('drag-over');
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  const col = e.currentTarget.closest('.column');
+  col.classList.remove('drag-over');
+  if (!draggingId) return;
+  const card = cards.find(c => c.id === draggingId);
+  if (card) { card.col = col.dataset.col; save(); render(); }
+}
+
+/* ── Enter to save ── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) {
+    if (document.activeElement.tagName !== 'BUTTON') saveCard();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
